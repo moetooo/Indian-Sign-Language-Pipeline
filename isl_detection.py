@@ -283,16 +283,7 @@ def capture_webcam(user_id: str):
             # Draw landmarks on display frame
             display = frame.copy()
 
-            # Draw pose (upper body only — we skip face)
-            if results.pose_landmarks:
-                mp_drawing.draw_landmarks(
-                    display,
-                    results.pose_landmarks,
-                    mp_holistic.POSE_CONNECTIONS,
-                    landmark_drawing_spec=mp_drawing_styles.get_default_pose_landmarks_style(),
-                )
-
-            # Draw hands
+            # Draw hands (no face/body dots)
             if results.left_hand_landmarks:
                 mp_drawing.draw_landmarks(
                     display,

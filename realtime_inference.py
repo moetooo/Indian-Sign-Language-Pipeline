@@ -241,7 +241,7 @@ def draw_hud(frame, prediction, confidence, fps, latency_ms,
 
 
 def draw_landmarks(frame, results):
-    """Draw hand and pose landmarks on the frame."""
+    """Draw hand landmarks on the frame (hands only — no face/body dots)."""
     # Left hand
     if results.left_hand_landmarks:
         mp_drawing.draw_landmarks(
@@ -259,19 +259,6 @@ def draw_landmarks(frame, results):
             mp_holistic.HAND_CONNECTIONS,
             mp_drawing_styles.get_default_hand_landmarks_style(),
             mp_drawing_styles.get_default_hand_connections_style(),
-        )
-    # Pose (upper body only)
-    if results.pose_landmarks:
-        mp_drawing.draw_landmarks(
-            frame,
-            results.pose_landmarks,
-            mp_holistic.POSE_CONNECTIONS,
-            landmark_drawing_spec=mp_drawing.DrawingSpec(
-                color=(245, 117, 66), thickness=2, circle_radius=2
-            ),
-            connection_drawing_spec=mp_drawing.DrawingSpec(
-                color=(245, 66, 230), thickness=2
-            ),
         )
 
 
