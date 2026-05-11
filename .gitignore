@@ -2,8 +2,8 @@
 # Generated data, trained models, and plots (large / user-specific)
 data/*
 !data/.gitkeep
-models/*
-!models/.gitkeep
+# models/*
+#!models/.gitkeep
 plots/*
 !plots/.gitkeep
 dataset/*
