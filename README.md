@@ -72,10 +72,10 @@ If models are already trained (located in the `models/` directory):
 
 ```powershell
 # Run real-time webcam inference (Press 1-7 to switch models live)
-python realtime_inference.py --model angles_only
+python src/inference/realtime_inference.py --model angles_only
 
 # Take the guided A-Z ISL Letter Test against the AI
-python test_all_letters.py --model angles_only
+python tests/test_all_letters.py --model angles_only
 ```
 
 ### 3. Training the Pipeline from Scratch
@@ -83,12 +83,12 @@ To run the automated data ingestion, feature engineering, and model training:
 
 ```powershell
 # Run full pipeline on the Kaggle CSV
-python run_pipeline.py --input "dataset\Indian Sign Language Gesture Landmarks.csv" --name kaggle
+python scripts/run_pipeline.py --input "dataset\Indian Sign Language Gesture Landmarks.csv" --name kaggle
 
 # Or run specific phases manually
-python isl_detection.py --mode import_kaggle
-python kinematic_engineer.py
-python train_classifier.py
+python src/data_pipeline/isl_detection.py --mode import_kaggle
+python src/features/kinematic_engineer.py
+python src/modeling/train_classifier.py
 ```
 
 ---

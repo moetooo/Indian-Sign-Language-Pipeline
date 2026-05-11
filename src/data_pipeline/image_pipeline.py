@@ -15,6 +15,15 @@ Usage:
     python image_pipeline.py --limit 50                   # limit images per class
 """
 
+from src.utils.logger import logger
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.utils.common import _hand_cols, _pose_cols, HAND_LANDMARK_COUNT, POSE_INDICES, AXES, CLASS_LABELS
+
+
+
 import argparse
 import os
 import sys
@@ -39,19 +48,12 @@ KIN_CSV     = os.path.join("data", "kinematic", "img_kinematic_data.csv")
 ANG_CSV     = os.path.join("data", "angles", "img_angles_only.csv")
 RESULTS_DIR = "models"
 
-HAND_LANDMARK_COUNT = 21
-AXES = ["x", "y", "z"]
-POSE_INDICES = [11, 12, 13, 14, 15, 16]
 
 # Excluded folders
 EXCLUDE_FOLDERS = {"{"}
 
 # Column names (matching Phase 1 schema)
-def _hand_cols(prefix):
-    return [f"{prefix}_{ax}{i}" for i in range(HAND_LANDMARK_COUNT) for ax in AXES]
 
-def _pose_cols():
-    return [f"pose_{ax}{idx}" for idx in POSE_INDICES for ax in AXES]
 
 META_COLS = ["label", "source", "user_id"]
 LH_COLS   = _hand_cols("lh")
@@ -68,21 +70,21 @@ mp_holistic = mp.solutions.holistic
 # ---------------------------------------------------------------------------
 def extract_from_images(dataset_dir, output_csv, limit_per_class=None):
     """Process all images in the dataset directory and extract landmarks."""
-    print(f"\n{'='*60}")
-    print("  Phase 1 — Image Landmark Extraction")
-    print(f"{'='*60}")
-    print(f"  Dataset: {dataset_dir}")
-    print(f"  Output:  {output_csv}")
+    logger.info(f"\n{'='*60}")
+    logger.info("  Phase 1 — Image Landmark Extraction")
+    logger.info(f"{'='*60}")
+    logger.info(f"  Dataset: {dataset_dir}")
+    logger.info(f"  Output:  {output_csv}")
     if limit_per_class:
-        print(f"  Limit:   {limit_per_class} images/class")
+        logger.info(f"  Limit:   {limit_per_class} images/class")
 
     # Discover classes
     class_dirs = sorted([
         d for d in os.listdir(dataset_dir)
         if os.path.isdir(os.path.join(dataset_dir, d)) and d not in EXCLUDE_FOLDERS
     ])
-    print(f"  Classes: {len(class_dirs)} ({class_dirs[:5]}...)")
-    print(f"  Using: MediaPipe Hands (static_image_mode=True)")
+    logger.info(f"  Classes: {len(class_dirs)} ({class_dirs[:5]}...)")
+    logger.info(f"  Using: MediaPipe Hands (static_image_mode=True)")
 
     rows = []
     total_images = 0
@@ -158,7 +160,7 @@ def extract_from_images(dataset_dir, output_csv, limit_per_class=None):
 
             elapsed = time.time() - t_start
             rate = total_images / elapsed if elapsed > 0 else 0
-            print(f"    [{cls_idx+1:2d}/26] {label}: {cls_count} extracted, "
+            logger.info(f"    [{cls_idx+1:2d}/26] {label}: {cls_count} extracted, "
                   f"{cls_skipped} skipped  ({rate:.1f} img/s)")
 
     # Save CSV
@@ -166,10 +168,10 @@ def extract_from_images(dataset_dir, output_csv, limit_per_class=None):
     df.to_csv(output_csv, index=False, encoding="utf-8")
 
     elapsed = time.time() - t_start
-    print(f"\n  Total: {total_images} rows, {skipped} skipped")
-    print(f"  Time:  {elapsed:.1f}s ({total_images/elapsed:.1f} img/s)")
-    print(f"  Saved: {output_csv} ({df.shape})")
-    print(f"  Labels: {df['label'].value_counts().to_dict()}")
+    logger.info(f"\n  Total: {total_images} rows, {skipped} skipped")
+    logger.info(f"  Time:  {elapsed:.1f}s ({total_images/elapsed:.1f} img/s)")
+    logger.info(f"  Saved: {output_csv} ({df.shape})")
+    logger.info(f"  Labels: {df['label'].value_counts().to_dict()}")
     return output_csv
 
 
@@ -178,9 +180,9 @@ def extract_from_images(dataset_dir, output_csv, limit_per_class=None):
 # ---------------------------------------------------------------------------
 def run_kinematic(raw_csv, kin_csv, ang_csv):
     """Run Phase 2 kinematic engineering on the extracted landmarks."""
-    print(f"\n{'='*60}")
-    print("  Phase 2 — Kinematic Feature Engineering (Images)")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info("  Phase 2 — Kinematic Feature Engineering (Images)")
+    logger.info(f"{'='*60}")
 
     from kinematic_engineer import run_pipeline
 
@@ -203,9 +205,9 @@ def run_kinematic(raw_csv, kin_csv, ang_csv):
 # ---------------------------------------------------------------------------
 def run_training():
     """Run Phase 3 training on the image-derived datasets."""
-    print(f"\n{'='*60}")
-    print("  Phase 3 — Training on Image Dataset")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info("  Phase 3 — Training on Image Dataset")
+    logger.info(f"{'='*60}")
 
     import train_classifier as tc
 
@@ -265,19 +267,19 @@ def main():
 
     if run_all or args.phase == 2:
         if not os.path.exists(RAW_CSV):
-            print(f"  ERROR: {RAW_CSV} not found. Run Phase 1 first.")
+            logger.info(f"  ERROR: {RAW_CSV} not found. Run Phase 1 first.")
             sys.exit(1)
         run_kinematic(RAW_CSV, KIN_CSV, ANG_CSV)
 
     if run_all or args.phase == 3:
         if not os.path.exists(KIN_CSV):
-            print(f"  ERROR: {KIN_CSV} not found. Run Phase 1+2 first.")
+            logger.info(f"  ERROR: {KIN_CSV} not found. Run Phase 1+2 first.")
             sys.exit(1)
         run_training()
 
-    print(f"\n{'='*60}")
-    print("  Image Pipeline Complete!")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info("  Image Pipeline Complete!")
+    logger.info(f"{'='*60}")
 
 
 if __name__ == "__main__":

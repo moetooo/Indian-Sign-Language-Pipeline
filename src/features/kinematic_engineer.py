@@ -21,6 +21,16 @@ Usage:
   python kinematic_engineer.py --skip-angles-only  # skip 2nd output
 """
 
+from src.utils.logger import logger
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.utils.math_utils import angle_between, is_hand_present, is_pose_present
+from src.utils.common import _hand_cols, _pose_cols, HAND_LANDMARK_COUNT, POSE_INDICES, AXES, CLASS_LABELS
+
+
+
 import argparse
 import os
 import sys
@@ -36,18 +46,11 @@ RAW_CSV_PATH     = os.path.join("data", "raw", "isl_raw_data.csv")
 OUT_FULL_PATH    = os.path.join("data", "kinematic", "isl_kinematic_data.csv")
 OUT_ANGLES_PATH  = os.path.join("data", "angles", "isl_angles_only.csv")
 
-HAND_LANDMARK_COUNT = 21
-AXES = ["x", "y", "z"]
-POSE_INDICES = [11, 12, 13, 14, 15, 16]
 
 META_COLS = ["label", "source", "user_id"]
 
 # Input column names (from Phase 1)
-def _hand_cols(prefix):
-    return [f"{prefix}_{ax}{i}" for i in range(HAND_LANDMARK_COUNT) for ax in AXES]
 
-def _pose_cols():
-    return [f"pose_{ax}{idx}" for idx in POSE_INDICES for ax in AXES]
 
 LH_COLS  = _hand_cols("lh")    # 63
 RH_COLS  = _hand_cols("rh")    # 63
@@ -104,20 +107,6 @@ SPREAD_PAIRS = [
 # ---------------------------------------------------------------------------
 # Math helpers
 # ---------------------------------------------------------------------------
-def _angle_between(v1: np.ndarray, v2: np.ndarray) -> float:
-    """
-    Angle (radians) between two 3D vectors using the dot-product formula.
-    Returns 0.0 if either vector has zero magnitude.
-    """
-    norm1 = np.linalg.norm(v1)
-    norm2 = np.linalg.norm(v2)
-    if norm1 < 1e-9 or norm2 < 1e-9:
-        return 0.0
-    cos_angle = np.dot(v1, v2) / (norm1 * norm2)
-    # Clamp to [-1, 1] to avoid numerical issues with arccos
-    cos_angle = np.clip(cos_angle, -1.0, 1.0)
-    return float(np.arccos(cos_angle))
-
 
 def _landmarks_to_array(flat_values: np.ndarray) -> np.ndarray:
     """
@@ -126,14 +115,6 @@ def _landmarks_to_array(flat_values: np.ndarray) -> np.ndarray:
     return flat_values.reshape(HAND_LANDMARK_COUNT, 3)
 
 
-def _is_hand_present(landmarks_21x3: np.ndarray) -> bool:
-    """Check if a hand has actual data (not all zeros)."""
-    return np.any(np.abs(landmarks_21x3) > 1e-9)
-
-
-def _is_pose_present(pose_flat: np.ndarray) -> bool:
-    """Check if pose (upper body) data is present."""
-    return np.any(np.abs(pose_flat) > 1e-9)
 
 
 # ---------------------------------------------------------------------------
@@ -144,14 +125,14 @@ def compute_joint_angles(landmarks_21x3: np.ndarray) -> list[float]:
     Compute 15 joint angles for one hand from its 21 landmarks (shape 21×3).
     Returns list of 15 floats in radians.
     """
-    if not _is_hand_present(landmarks_21x3):
+    if not is_hand_present(landmarks_21x3):
         return [0.0] * 15
 
     angles = []
     for a, b, c in FINGER_JOINT_TRIPLETS:
         v1 = landmarks_21x3[a] - landmarks_21x3[b]  # bone b→a
         v2 = landmarks_21x3[c] - landmarks_21x3[b]  # bone b→c
-        angles.append(_angle_between(v1, v2))
+        angles.append(angle_between(v1, v2))
 
     return angles
 
@@ -161,14 +142,14 @@ def compute_spread_angles(landmarks_21x3: np.ndarray) -> list[float]:
     Compute 4 inter-finger spread angles for one hand.
     Returns list of 4 floats in radians.
     """
-    if not _is_hand_present(landmarks_21x3):
+    if not is_hand_present(landmarks_21x3):
         return [0.0] * 4
 
     spreads = []
     for base_a, tip_a, base_b, tip_b in SPREAD_PAIRS:
         va = landmarks_21x3[tip_a] - landmarks_21x3[base_a]
         vb = landmarks_21x3[tip_b] - landmarks_21x3[base_b]
-        spreads.append(_angle_between(va, vb))
+        spreads.append(angle_between(va, vb))
 
     return spreads
 
@@ -193,9 +174,9 @@ def center_and_normalize(lh_flat: np.ndarray, rh_flat: np.ndarray,
     rh = _landmarks_to_array(rh_flat.copy())       # (21, 3)
     pose = pose_flat.copy().reshape(len(POSE_INDICES), 3)  # (6, 3)
 
-    lh_present = _is_hand_present(lh)
-    rh_present = _is_hand_present(rh)
-    pose_present = _is_pose_present(pose)
+    lh_present = is_hand_present(lh)
+    rh_present = is_hand_present(rh)
+    pose_present = is_pose_present(pose)
 
     # ── Determine translation center ──
     if pose_present:
@@ -295,45 +276,45 @@ def run_pipeline(input_path: str, dry_run: bool = False,
     """
     t_start = time.time()
 
-    print(f"\n{'='*60}")
-    print(f"  Phase 2 - Kinematic Feature Engineering")
-    print(f"{'='*60}")
-    print(f"  Input:  {input_path}")
-    print(f"  Output: {OUT_FULL_PATH} (185 cols)")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  Phase 2 - Kinematic Feature Engineering")
+    logger.info(f"{'='*60}")
+    logger.info(f"  Input:  {input_path}")
+    logger.info(f"  Output: {OUT_FULL_PATH} (185 cols)")
     if not skip_angles_only:
-        print(f"          {OUT_ANGLES_PATH} (41 cols)")
-    print(f"  Dry run: {dry_run}\n")
+        logger.info(f"          {OUT_ANGLES_PATH} (41 cols)")
+    logger.info(f"  Dry run: {dry_run}\n")
 
     # ── Load input ──
     if not os.path.exists(input_path):
-        print(f"  ERROR: Input file not found: {input_path}")
+        logger.info(f"  ERROR: Input file not found: {input_path}")
         sys.exit(1)
 
     df = pd.read_csv(input_path)
     n_rows = len(df)
-    print(f"  Loaded {n_rows:,} rows x {df.shape[1]} cols")
-    print(f"  Labels: {df['label'].nunique()} unique")
-    print(f"  Sources: {df['source'].value_counts().to_dict()}")
+    logger.info(f"  Loaded {n_rows:,} rows x {df.shape[1]} cols")
+    logger.info(f"  Labels: {df['label'].nunique()} unique")
+    logger.info(f"  Sources: {df['source'].value_counts().to_dict()}")
 
     # ── Check for pose data ──
     pose_cols_present = all(c in df.columns for c in POSE_COLS)
     if pose_cols_present:
         has_pose = (df[POSE_COLS].abs().sum(axis=1) > 1e-9)
         n_with_pose = has_pose.sum()
-        print(f"  Rows with pose data: {n_with_pose:,} / {n_rows:,}")
+        logger.info(f"  Rows with pose data: {n_with_pose:,} / {n_rows:,}")
     else:
-        print(f"  WARNING: Pose columns not found in input!")
+        logger.info(f"  WARNING: Pose columns not found in input!")
 
     if dry_run:
-        print(f"\n  DRY RUN - would process {n_rows:,} rows")
-        print(f"  Output schema (full):  {len(OUT_FULL_COLS)} columns")
-        print(f"  Output schema (angles): {len(OUT_ANGLES_COLS)} columns")
-        print(f"  Column samples (full):  {OUT_FULL_COLS[:5]} ... {OUT_FULL_COLS[-5:]}")
-        print(f"  Column samples (angles): {OUT_ANGLES_COLS[:5]} ... {OUT_ANGLES_COLS[-5:]}")
+        logger.info(f"\n  DRY RUN - would process {n_rows:,} rows")
+        logger.info(f"  Output schema (full):  {len(OUT_FULL_COLS)} columns")
+        logger.info(f"  Output schema (angles): {len(OUT_ANGLES_COLS)} columns")
+        logger.info(f"  Column samples (full):  {OUT_FULL_COLS[:5]} ... {OUT_FULL_COLS[-5:]}")
+        logger.info(f"  Column samples (angles): {OUT_ANGLES_COLS[:5]} ... {OUT_ANGLES_COLS[-5:]}")
         return
 
     # ── Process rows ──
-    print(f"\n  Processing {n_rows:,} rows...")
+    logger.info(f"\n  Processing {n_rows:,} rows...")
     results = []
     report_interval = max(1, n_rows // 20)
 
@@ -344,49 +325,49 @@ def run_pipeline(input_path: str, dry_run: bool = False,
             elapsed = time.time() - t_start
             rate = (idx + 1) / elapsed if elapsed > 0 else 0
             eta = (n_rows - idx - 1) / rate if rate > 0 else 0
-            print(f"    [{pct:5.1f}%] {idx+1:,}/{n_rows:,} rows  "
+            logger.info(f"    [{pct:5.1f}%] {idx+1:,}/{n_rows:,} rows  "
                   f"({rate:.0f} rows/s, ETA {eta:.0f}s)")
 
     out_df = pd.DataFrame(results, columns=OUT_FULL_COLS)
 
     # ── Write full output ──
     out_df.to_csv(OUT_FULL_PATH, index=False, encoding="utf-8")
-    print(f"\n  Wrote {OUT_FULL_PATH}: {out_df.shape}")
+    logger.info(f"\n  Wrote {OUT_FULL_PATH}: {out_df.shape}")
 
     # ── Write angles-only output ──
     if not skip_angles_only:
         angles_df = out_df[OUT_ANGLES_COLS]
         angles_df.to_csv(OUT_ANGLES_PATH, index=False, encoding="utf-8")
-        print(f"  Wrote {OUT_ANGLES_PATH}: {angles_df.shape}")
+        logger.info(f"  Wrote {OUT_ANGLES_PATH}: {angles_df.shape}")
 
     # ── Summary stats ──
     elapsed = time.time() - t_start
     feature_cols = [c for c in out_df.columns if c not in META_COLS]
-    print(f"\n  Summary:")
-    print(f"    Total time:     {elapsed:.1f}s")
-    print(f"    Rows:           {len(out_df):,}")
-    print(f"    Feature cols:   {len(feature_cols)}")
-    print(f"    NaN count:      {out_df[feature_cols].isna().sum().sum()}")
+    logger.info(f"\n  Summary:")
+    logger.info(f"    Total time:     {elapsed:.1f}s")
+    logger.info(f"    Rows:           {len(out_df):,}")
+    logger.info(f"    Feature cols:   {len(feature_cols)}")
+    logger.info(f"    NaN count:      {out_df[feature_cols].isna().sum().sum()}")
 
     # Angle stats
     angle_cols_in_df = [c for c in ALL_ANGLE_COLS if c in out_df.columns]
     angle_vals = out_df[angle_cols_in_df].values
     non_zero_angles = angle_vals[angle_vals > 1e-9]
     if len(non_zero_angles) > 0:
-        print(f"    Angle range:    [{non_zero_angles.min():.4f}, {non_zero_angles.max():.4f}] rad")
-        print(f"    Angle mean:     {non_zero_angles.mean():.4f} rad ({np.degrees(non_zero_angles.mean()):.1f} deg)")
+        logger.info(f"    Angle range:    [{non_zero_angles.min():.4f}, {non_zero_angles.max():.4f}] rad")
+        logger.info(f"    Angle mean:     {non_zero_angles.mean():.4f} rad ({np.degrees(non_zero_angles.mean()):.1f} deg)")
     else:
-        print(f"    Angle range:    all zeros")
+        logger.info(f"    Angle range:    all zeros")
 
     # Coord stats
     coord_cols = CN_LH_COLS + CN_RH_COLS + CN_POSE_COLS
     coord_vals = out_df[coord_cols].values
-    print(f"    Coord range:    [{coord_vals.min():.6f}, {coord_vals.max():.6f}]")
-    print(f"    Max |coord|:    {np.max(np.abs(coord_vals)):.6f}")
+    logger.info(f"    Coord range:    [{coord_vals.min():.6f}, {coord_vals.max():.6f}]")
+    logger.info(f"    Max |coord|:    {np.max(np.abs(coord_vals)):.6f}")
 
-    print(f"\n{'='*60}")
-    print(f"  Phase 2 COMPLETE")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  Phase 2 COMPLETE")
+    logger.info(f"{'='*60}")
 
 
 # ---------------------------------------------------------------------------

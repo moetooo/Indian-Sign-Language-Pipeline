@@ -18,6 +18,12 @@ Outputs (in results/):
     - ablation_summary.csv      comparison table
 """
 
+from src.utils.logger import logger
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import os
 import time
 import warnings
@@ -53,7 +59,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 # ──────────────────────────────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────────────────────────────
-from paths import MODELS_DIR, PLOTS_DIR, ensure_dirs
+from src.utils.paths import MODELS_DIR, PLOTS_DIR, ensure_dirs
 
 RESULTS_DIR = MODELS_DIR   # backward compat for external callers
 RANDOM_STATE = 42
@@ -151,7 +157,7 @@ def plot_confusion_matrix(y_true, y_pred, class_labels, run_name, save_path):
     plt.tight_layout()
     fig.savefig(save_path, dpi=150)
     plt.close(fig)
-    print(f"    Saved: {save_path}")
+    logger.info(f"    Saved: {save_path}")
 
 
 def plot_training_history(history, run_name, save_path):
@@ -179,7 +185,7 @@ def plot_training_history(history, run_name, save_path):
     plt.tight_layout()
     fig.savefig(save_path, dpi=150)
     plt.close(fig)
-    print(f"    Saved: {save_path}")
+    logger.info(f"    Saved: {save_path}")
 
 
 # ──────────────────────────────────────────────────────────────────────
@@ -190,27 +196,32 @@ def run_experiment(run_name, csv_path, label_col, drop_cols):
     Load data, train model, evaluate, save outputs for one ablation run.
     Returns a dict of metrics.
     """
-    print(f"\n{'='*60}")
-    print(f"  RUN: {run_name}")
-    print(f"  CSV: {csv_path}")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  RUN: {run_name}")
+    logger.info(f"  CSV: {csv_path}")
+    logger.info(f"{'='*60}")
 
     # ── Load ──────────────────────────────────────────────────────
     t0 = time.time()
-    print(f"  Loading data...")
-    df = pd.read_csv(csv_path)
-    print(f"    Shape: {df.shape}")
+    logger.info(f"  Loading data...")
+    df = pd.read_csv(csv_path, low_memory=False)
+    logger.info(f"    Shape: {df.shape}")
+
+    # Clean labels: drop NaN, convert all to string
+    df = df.dropna(subset=[label_col])
+    df[label_col] = df[label_col].astype(str).str.strip()
+    df = df[df[label_col] != ""]
 
     y_raw = df[label_col].values
     X = df.drop(columns=drop_cols).values.astype(np.float32)
-    print(f"    Features: {X.shape[1]}, Samples: {X.shape[0]}")
+    logger.info(f"    Features: {X.shape[1]}, Samples: {X.shape[0]}")
 
     # ── Encode labels ─────────────────────────────────────────────
     le = LabelEncoder()
     y = le.fit_transform(y_raw)
     num_classes = len(le.classes_)
     class_labels = [str(c) for c in le.classes_]
-    print(f"    Classes: {num_classes}  ({class_labels[:5]}{'...' if num_classes > 5 else ''})")
+    logger.info(f"    Classes: {num_classes}  ({class_labels[:5]}{'...' if num_classes > 5 else ''})")
 
     # ── Split ─────────────────────────────────────────────────────
     X_train_val, X_test, y_train_val, y_test = train_test_split(
@@ -222,7 +233,7 @@ def run_experiment(run_name, csv_path, label_col, drop_cols):
         random_state=RANDOM_STATE,
         stratify=y_train_val,
     )
-    print(f"    Split: train={len(X_train)}, val={len(X_val)}, test={len(X_test)}")
+    logger.info(f"    Split: train={len(X_train)}, val={len(X_val)}, test={len(X_test)}")
 
     # ── Scale ─────────────────────────────────────────────────────
     scaler = StandardScaler()
@@ -233,10 +244,10 @@ def run_experiment(run_name, csv_path, label_col, drop_cols):
     # ── Save scaler for inference ─────────────────────────────────
     s_path = os.path.join(MODELS_DIR, f"scaler_{run_name}.pkl")
     joblib.dump(scaler, s_path)
-    print(f"    Scaler saved: {s_path}")
+    logger.info(f"    Scaler saved: {s_path}")
 
     # ── Build & train ─────────────────────────────────────────────
-    print(f"  Building model (input_dim={X_train.shape[1]}, classes={num_classes})...")
+    logger.info(f"  Building model (input_dim={X_train.shape[1]}, classes={num_classes})...")
     model = build_mlp(X_train.shape[1], num_classes)
     model.summary(print_fn=lambda x: None)  # suppress summary
 
@@ -256,7 +267,7 @@ def run_experiment(run_name, csv_path, label_col, drop_cols):
         ),
     ]
 
-    print(f"  Training (max {MAX_EPOCHS} epochs, batch={BATCH_SIZE})...")
+    logger.info(f"  Training (max {MAX_EPOCHS} epochs, batch={BATCH_SIZE})...")
     history = model.fit(
         X_train, y_train,
         validation_data=(X_val, y_val),
@@ -268,7 +279,7 @@ def run_experiment(run_name, csv_path, label_col, drop_cols):
     train_time = time.time() - t0
 
     # ── Evaluate ──────────────────────────────────────────────────
-    print(f"  Evaluating on test set...")
+    logger.info(f"  Evaluating on test set...")
     y_pred_proba = model.predict(X_test, verbose=0)
     y_pred = np.argmax(y_pred_proba, axis=1)
 
@@ -278,19 +289,19 @@ def run_experiment(run_name, csv_path, label_col, drop_cols):
     f1 = f1_score(y_test, y_pred, average="weighted", zero_division=0)
     f1_macro = f1_score(y_test, y_pred, average="macro", zero_division=0)
 
-    print(f"\n  ── Results ──")
-    print(f"    Accuracy:        {acc:.4f}")
-    print(f"    Precision (M):   {prec:.4f}")
-    print(f"    Recall (M):      {rec:.4f}")
-    print(f"    F1 (weighted):   {f1:.4f}")
-    print(f"    F1 (macro):      {f1_macro:.4f}")
-    print(f"    Train time:      {train_time:.1f}s")
-    print(f"    Epochs run:      {len(history.history['loss'])}")
+    logger.info(f"\n  ── Results ──")
+    logger.info(f"    Accuracy:        {acc:.4f}")
+    logger.info(f"    Precision (M):   {prec:.4f}")
+    logger.info(f"    Recall (M):      {rec:.4f}")
+    logger.info(f"    F1 (weighted):   {f1:.4f}")
+    logger.info(f"    F1 (macro):      {f1_macro:.4f}")
+    logger.info(f"    Train time:      {train_time:.1f}s")
+    logger.info(f"    Epochs run:      {len(history.history['loss'])}")
 
     # ── Save model ────────────────────────────────────────────────
     m_path = os.path.join(MODELS_DIR, f"isl_{run_name}_mlp.h5")
     model.save(m_path)
-    print(f"    Model saved: {m_path}")
+    logger.info(f"    Model saved: {m_path}")
 
     # ── Plots ─────────────────────────────────────────────────────
     c_path = os.path.join(PLOTS_DIR, f"cm_{run_name}.png")
@@ -300,8 +311,8 @@ def run_experiment(run_name, csv_path, label_col, drop_cols):
     plot_training_history(history, run_name, h_path)
 
     # ── Classification report (to console) ────────────────────────
-    print(f"\n  Classification Report ({run_name}):")
-    print(classification_report(y_test, y_pred, target_names=class_labels))
+    logger.info(f"\n  Classification Report ({run_name}):")
+    logger.info(classification_report(y_test, y_pred, target_names=class_labels))
 
     return {
         "run": run_name,
@@ -321,47 +332,47 @@ def run_experiment(run_name, csv_path, label_col, drop_cols):
 # Main
 # ──────────────────────────────────────────────────────────────────────
 def main():
-    print("=" * 60)
-    print("  Phase 3 — ISL Classifier Training & Ablation Study")
-    print("=" * 60)
-    print(f"  TensorFlow: {tf.__version__}")
-    print(f"  GPU available: {len(tf.config.list_physical_devices('GPU')) > 0}")
-    print(f"  Models dir: {MODELS_DIR}/")
-    print(f"  Plots dir:  {PLOTS_DIR}/")
-    print()
+    logger.info("=" * 60)
+    logger.info("  Phase 3 — ISL Classifier Training & Ablation Study")
+    logger.info("=" * 60)
+    logger.info(f"  TensorFlow: {tf.__version__}")
+    logger.info(f"  GPU available: {len(tf.config.list_physical_devices('GPU')) > 0}")
+    logger.info(f"  Models dir: {MODELS_DIR}/")
+    logger.info(f"  Plots dir:  {PLOTS_DIR}/")
+    logger.info("")
 
     ensure_dirs()
 
     results = []
     for run_name, csv_path, label_col, drop_cols in ABLATION_RUNS:
         if not os.path.exists(csv_path):
-            print(f"\n  [SKIP] {csv_path} not found — skipping {run_name}")
+            logger.info(f"\n  [SKIP] {csv_path} not found — skipping {run_name}")
             continue
         metrics = run_experiment(run_name, csv_path, label_col, drop_cols)
         results.append(metrics)
 
     # ── Summary table ─────────────────────────────────────────────
     if results:
-        print(f"\n{'='*60}")
-        print("  ABLATION STUDY SUMMARY")
-        print(f"{'='*60}")
+        logger.info(f"\n{'='*60}")
+        logger.info("  ABLATION STUDY SUMMARY")
+        logger.info(f"{'='*60}")
         df_summary = pd.DataFrame(results)
-        print(df_summary.to_string(index=False))
+        logger.info(df_summary.to_string(index=False))
 
         summary_path = os.path.join(PLOTS_DIR, "ablation_summary.csv")
         df_summary.to_csv(summary_path, index=False)
-        print(f"\n  Summary saved: {summary_path}")
+        logger.info(f"\n  Summary saved: {summary_path}")
 
         # Highlight best
         best_idx = df_summary["f1_weighted"].idxmax()
         best = df_summary.loc[best_idx]
-        print(f"\n  ★ Best run: {best['run']}  (F1-weighted = {best['f1_weighted']:.4f})")
+        logger.info(f"\n  ★ Best run: {best['run']}  (F1-weighted = {best['f1_weighted']:.4f})")
     else:
-        print("\n  No runs completed. Check that CSV files exist.")
+        logger.info("\n  No runs completed. Check that CSV files exist.")
 
-    print(f"\n{'='*60}")
-    print("  Phase 3 complete!")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info("  Phase 3 complete!")
+    logger.info(f"{'='*60}")
 
 
 if __name__ == "__main__":

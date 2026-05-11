@@ -15,6 +15,13 @@ Usage:
     python test_all_letters.py --model raw     # use raw model
 """
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.utils.common import _hand_cols, _pose_cols, HAND_LANDMARK_COUNT, POSE_INDICES, AXES, CLASS_LABELS
+
+
+
 import argparse
 import os
 import sys

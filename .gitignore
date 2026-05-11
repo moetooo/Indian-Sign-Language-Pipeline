@@ -1,9 +1,15 @@
 # ─── Project-specific ───────────────────────────────────────
 # Generated data, trained models, and plots (large / user-specific)
-data/
-models/
-plots/
-dataset/
+data/*
+!data/.gitkeep
+models/*
+!models/.gitkeep
+plots/*
+!plots/.gitkeep
+dataset/*
+!dataset/.gitkeep
+npy_dataset/*
+!npy_dataset/.gitkeep
 
 # Large archive bundles — never commit these
 *.zip
@@ -129,3 +135,17 @@ target/
 .spyderproject
 .spyproject
 /site
+/viva
+# Ensure empty directories are tracked
+!data/.gitkeep
+!models/.gitkeep
+!plots/.gitkeep
+!dataset/.gitkeep
+!npy_dataset/.gitkeep
+# ─── Dynamic Part (Experimental) ───────────────────────────
+src/features/temporal_engineer.py
+src/modeling/train_dynamic.py
+src/inference/realtime_dynamic.py
+data/temporal/
+data/dynamic/
+models/*dynamic*

@@ -24,6 +24,15 @@ This will produce:
   results/isl_{name}_angles_only_mlp.h5   + scaler_{name}_angles_only.pkl
 """
 
+from src.utils.logger import logger
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.utils.common import _hand_cols, _pose_cols, HAND_LANDMARK_COUNT, POSE_INDICES, AXES, CLASS_LABELS
+
+
+
 import argparse
 import os
 import sys
@@ -39,25 +48,18 @@ import mediapipe as mp
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 warnings.filterwarnings("ignore", category=UserWarning)
 
-from paths import DATA_RAW_DIR, DATA_KIN_DIR, DATA_ANG_DIR, MODELS_DIR, PLOTS_DIR, ensure_dirs
+from src.utils.paths import DATA_RAW_DIR, DATA_KIN_DIR, DATA_ANG_DIR, MODELS_DIR, PLOTS_DIR, ensure_dirs
 
 # ---------------------------------------------------------------------------
 # Constants (same schema as Phase 1)
 # ---------------------------------------------------------------------------
-HAND_LANDMARK_COUNT = 21
-AXES = ["x", "y", "z"]
-POSE_INDICES = [11, 12, 13, 14, 15, 16]
 EXCLUDE_FOLDERS = {"{", ".", ".."}
 
 META_COLS = ["label", "source", "user_id"]
 
 
-def _hand_cols(prefix):
-    return [f"{prefix}_{ax}{i}" for i in range(HAND_LANDMARK_COUNT) for ax in AXES]
 
 
-def _pose_cols():
-    return [f"pose_{ax}{idx}" for idx in POSE_INDICES for ax in AXES]
 
 
 LH_COLS = _hand_cols("lh")
@@ -79,11 +81,11 @@ def detect_input_type(path):
         if len(subdirs) >= 10:
             return "images"
         else:
-            print(f"  ERROR: Directory has only {len(subdirs)} subfolders.")
-            print(f"         Expected letter subfolders (a/, b/, c/, ...)")
+            logger.info(f"  ERROR: Directory has only {len(subdirs)} subfolders.")
+            logger.info(f"         Expected letter subfolders (a/, b/, c/, ...)")
             sys.exit(1)
     else:
-        print(f"  ERROR: '{path}' is neither a CSV file nor a directory.")
+        logger.info(f"  ERROR: '{path}' is neither a CSV file nor a directory.")
         sys.exit(1)
 
 
@@ -92,9 +94,9 @@ def detect_input_type(path):
 # ---------------------------------------------------------------------------
 def phase1_extract(image_dir, output_csv, name):
     """Extract hand landmarks from images using MediaPipe Hands."""
-    print(f"\n{'='*60}")
-    print(f"  Phase 1 — Landmark Extraction [{name}]")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  Phase 1 — Landmark Extraction [{name}]")
+    logger.info(f"{'='*60}")
 
     class_dirs = sorted([
         d for d in os.listdir(image_dir)
@@ -105,10 +107,10 @@ def phase1_extract(image_dir, output_csv, name):
              if f.lower().endswith(('.jpg', '.jpeg', '.png'))])
         for d in class_dirs
     )
-    print(f"  Input:   {image_dir}")
-    print(f"  Classes: {len(class_dirs)}")
-    print(f"  Images:  ~{total_files}")
-    print(f"  Output:  {output_csv}")
+    logger.info(f"  Input:   {image_dir}")
+    logger.info(f"  Classes: {len(class_dirs)}")
+    logger.info(f"  Images:  ~{total_files}")
+    logger.info(f"  Output:  {output_csv}")
 
     mp_hands = mp.solutions.hands
     rows = []
@@ -165,11 +167,11 @@ def phase1_extract(image_dir, output_csv, name):
 
             elapsed = time.time() - t0
             rate = total / elapsed if elapsed > 0 else 0
-            print(f"    [{ci+1:2d}/{len(class_dirs)}] {label}: {ok} ok, {fail} skip  ({rate:.1f} img/s)")
+            logger.info(f"    [{ci+1:2d}/{len(class_dirs)}] {label}: {ok} ok, {fail} skip  ({rate:.1f} img/s)")
 
     df = pd.DataFrame(rows, columns=ALL_COLS)
     df.to_csv(output_csv, index=False)
-    print(f"\n  Done: {total} rows, {skipped} skipped → {output_csv}")
+    logger.info(f"\n  Done: {total} rows, {skipped} skipped → {output_csv}")
     return output_csv
 
 
@@ -178,9 +180,9 @@ def phase1_extract(image_dir, output_csv, name):
 # ---------------------------------------------------------------------------
 def phase2_kinematic(raw_csv, kin_csv, ang_csv, name):
     """Apply Phase 2 kinematic transforms."""
-    print(f"\n{'='*60}")
-    print(f"  Phase 2 — Kinematic Engineering [{name}]")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  Phase 2 — Kinematic Engineering [{name}]")
+    logger.info(f"{'='*60}")
 
     from kinematic_engineer import run_pipeline
     import kinematic_engineer as ke
@@ -195,7 +197,7 @@ def phase2_kinematic(raw_csv, kin_csv, ang_csv, name):
 
     ke.OUT_FULL_PATH = orig_full
     ke.OUT_ANGLES_PATH = orig_ang
-    print(f"  Outputs: {kin_csv}, {ang_csv}")
+    logger.info(f"  Outputs: {kin_csv}, {ang_csv}")
 
 
 # ---------------------------------------------------------------------------
@@ -203,9 +205,9 @@ def phase2_kinematic(raw_csv, kin_csv, ang_csv, name):
 # ---------------------------------------------------------------------------
 def phase3_train(raw_csv, kin_csv, ang_csv, name, outdir):
     """Train models with custom naming."""
-    print(f"\n{'='*60}")
-    print(f"  Phase 3 — Training [{name}]")
-    print(f"{'='*60}")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  Phase 3 — Training [{name}]")
+    logger.info(f"{'='*60}")
 
     import train_classifier as tc
 
@@ -228,10 +230,10 @@ def phase3_train(raw_csv, kin_csv, ang_csv, name, outdir):
     tc.MODELS_DIR = orig_dir
     tc.RESULTS_DIR = orig_dir
 
-    print(f"\n  Models saved to: {outdir}/")
-    print(f"    isl_{name}_raw_mlp.h5          + scaler_{name}_raw.pkl")
-    print(f"    isl_{name}_kinematic_mlp.h5    + scaler_{name}_kinematic.pkl")
-    print(f"    isl_{name}_angles_only_mlp.h5  + scaler_{name}_angles_only.pkl")
+    logger.info(f"\n  Models saved to: {outdir}/")
+    logger.info(f"    isl_{name}_raw_mlp.h5          + scaler_{name}_raw.pkl")
+    logger.info(f"    isl_{name}_kinematic_mlp.h5    + scaler_{name}_kinematic.pkl")
+    logger.info(f"    isl_{name}_angles_only_mlp.h5  + scaler_{name}_angles_only.pkl")
 
 
 # ---------------------------------------------------------------------------
@@ -273,13 +275,13 @@ Examples:
 
     ensure_dirs()
 
-    print(f"\n{'='*60}")
-    print(f"  Unified ISL Pipeline")
-    print(f"{'='*60}")
-    print(f"  Input:   {args.input} ({input_type})")
-    print(f"  Name:    {args.name}")
-    print(f"  Phases:  {args.phase}")
-    print(f"  Output:  {args.outdir}/")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  Unified ISL Pipeline")
+    logger.info(f"{'='*60}")
+    logger.info(f"  Input:   {args.input} ({input_type})")
+    logger.info(f"  Name:    {args.name}")
+    logger.info(f"  Phases:  {args.phase}")
+    logger.info(f"  Output:  {args.outdir}/")
 
     # Phase 1
     if 1 in args.phase:
@@ -288,7 +290,7 @@ Examples:
         elif input_type == "csv":
             # CSV already has landmarks — just copy/use as raw
             raw_csv = args.input
-            print(f"\n  Phase 1: Skipped (CSV input → using {raw_csv} directly)")
+            logger.info(f"\n  Phase 1: Skipped (CSV input → using {raw_csv} directly)")
     else:
         if input_type == "csv":
             raw_csv = args.input
@@ -296,26 +298,26 @@ Examples:
     # Phase 2
     if 2 in args.phase:
         if not os.path.exists(raw_csv):
-            print(f"  ERROR: {raw_csv} not found. Run Phase 1 first.")
+            logger.info(f"  ERROR: {raw_csv} not found. Run Phase 1 first.")
             sys.exit(1)
         phase2_kinematic(raw_csv, kin_csv, ang_csv, args.name)
 
     # Phase 3
     if 3 in args.phase:
         if not os.path.exists(kin_csv):
-            print(f"  ERROR: {kin_csv} not found. Run Phase 1+2 first.")
+            logger.info(f"  ERROR: {kin_csv} not found. Run Phase 1+2 first.")
             sys.exit(1)
         phase3_train(raw_csv, kin_csv, ang_csv, args.name, args.outdir)
 
-    print(f"\n{'='*60}")
-    print(f"  Pipeline Complete! [{args.name}]")
-    print(f"{'='*60}")
-    print(f"\n  To use your models:")
-    print(f"    python realtime_inference.py --model {args.name}_raw")
-    print(f"    python realtime_inference.py --model {args.name}_kinematic")
-    print(f"    python realtime_inference.py --model {args.name}_angles_only")
-    print(f"\n  NOTE: Add your models to MODEL_CONFIGS in realtime_inference.py")
-    print(f"        to use them with live switching (keys 1-9).\n")
+    logger.info(f"\n{'='*60}")
+    logger.info(f"  Pipeline Complete! [{args.name}]")
+    logger.info(f"{'='*60}")
+    logger.info(f"\n  To use your models:")
+    logger.info(f"    python realtime_inference.py --model {args.name}_raw")
+    logger.info(f"    python realtime_inference.py --model {args.name}_kinematic")
+    logger.info(f"    python realtime_inference.py --model {args.name}_angles_only")
+    logger.info(f"\n  NOTE: Add your models to MODEL_CONFIGS in realtime_inference.py")
+    logger.info(f"        to use them with live switching (keys 1-9).\n")
 
 
 if __name__ == "__main__":

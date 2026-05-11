@@ -1,0 +1,26 @@
+# config.yaml
+data:
+  raw_csv: "data/raw/isl_raw_data.csv"
+  kinematic_csv: "data/kinematic/isl_kinematic_data.csv"
+  angles_csv: "data/angles/isl_angles_only.csv"
+  img_raw_csv: "data/raw/img_raw_data.csv"
+
+model:
+  static:
+    epochs: 50
+    batch_size: 32
+  dynamic:
+    sequence_length: 30
+    lstm_units: [128, 64]
+
+realtime:
+  camera_idx: 0
+  confidence_threshold: 0.85
+  smoothing_alpha: 0.35
+
+paths:
+  models_dir: "models/"
+  logs_dir: "logs/"
+  plots_dir: "plots/"
+  dataset_dir: "dataset/"
+  npy_dataset_dir: "npy_dataset/"

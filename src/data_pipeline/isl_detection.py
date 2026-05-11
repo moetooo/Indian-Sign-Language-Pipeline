@@ -17,6 +17,15 @@ Usage:
   python isl_detection.py --mode detect
 """
 
+from src.utils.logger import logger
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from src.utils.common import _hand_cols, _pose_cols, HAND_LANDMARK_COUNT, POSE_INDICES, AXES, CLASS_LABELS
+
+
+
 import argparse
 import csv
 import copy
@@ -42,28 +51,11 @@ CONFIDENCE_THRESHOLD = 0.7
 SIGN_CLASSES = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ") + [str(i) for i in range(1, 10)] + ["Neutral"]
 
 # Upper-body pose landmark indices we care about
-POSE_INDICES = [11, 12, 13, 14, 15, 16]  # L/R shoulder, elbow, wrist
 POSE_NAMES   = ["shoulder_l", "shoulder_r", "elbow_l", "elbow_r", "wrist_l", "wrist_r"]
 
 # Column definitions
-HAND_LANDMARK_COUNT = 21
-AXES = ["x", "y", "z"]
 
-def _hand_cols(prefix: str) -> list[str]:
-    """Generate column names like lh_x0, lh_y0, lh_z0, ..., lh_z20."""
-    cols = []
-    for i in range(HAND_LANDMARK_COUNT):
-        for ax in AXES:
-            cols.append(f"{prefix}_{ax}{i}")
-    return cols
 
-def _pose_cols() -> list[str]:
-    """Generate column names like pose_x11, pose_y11, pose_z11, ..., pose_z16."""
-    cols = []
-    for idx in POSE_INDICES:
-        for ax in AXES:
-            cols.append(f"pose_{ax}{idx}")
-    return cols
 
 META_COLS    = ["label", "source", "user_id"]
 LH_COLS      = _hand_cols("lh")       # 63 columns
@@ -171,10 +163,10 @@ def import_kaggle(dry_run: bool = False):
 
     # ── Dataset 1: Indian Sign Language Gesture Landmarks.csv ──────────
     if os.path.exists(KAGGLE_CSV_1):
-        print(f"\n📂  Loading Kaggle dataset: {KAGGLE_CSV_1}")
+        logger.info(f"\n📂  Loading Kaggle dataset: {KAGGLE_CSV_1}")
         df = pd.read_csv(KAGGLE_CSV_1)
-        print(f"    Shape: {df.shape}")
-        print(f"    Labels: {sorted(df['target'].unique().tolist())}")
+        logger.info(f"    Shape: {df.shape}")
+        logger.info(f"    Labels: {sorted(df['target'].unique().tolist())}")
 
         rows = []
         for _, row in df.iterrows():
@@ -201,30 +193,30 @@ def import_kaggle(dry_run: bool = False):
             rows.append([label, "kaggle_hand_landmarks", "kaggle"] + features)
 
         if dry_run:
-            print(f"    ✅ Would import {len(rows)} rows")
+            logger.info(f"    ✅ Would import {len(rows)} rows")
             label_counts = {}
             for r in rows:
                 label_counts[r[0]] = label_counts.get(r[0], 0) + 1
             for lbl in sorted(label_counts.keys()):
-                print(f"       {lbl}: {label_counts[lbl]}")
+                logger.info(f"       {lbl}: {label_counts[lbl]}")
         else:
             _ensure_csv_header(RAW_CSV_PATH)
             with open(RAW_CSV_PATH, "a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerows(rows)
-            print(f"    ✅ Imported {len(rows)} rows → {RAW_CSV_PATH}")
+            logger.info(f"    ✅ Imported {len(rows)} rows → {RAW_CSV_PATH}")
         total_imported += len(rows)
     else:
-        print(f"⚠️  Kaggle dataset not found: {KAGGLE_CSV_1}")
+        logger.info(f"⚠️  Kaggle dataset not found: {KAGGLE_CSV_1}")
 
     # ── Summary ────────────────────────────────────────────────────────
-    print(f"\n{'DRY RUN — ' if dry_run else ''}Total: {total_imported} rows")
+    logger.info(f"\n{'DRY RUN — ' if dry_run else ''}Total: {total_imported} rows")
     if not dry_run and os.path.exists(RAW_CSV_PATH):
         df = pd.read_csv(RAW_CSV_PATH)
-        print(f"CSV shape: {df.shape}")
-        print(f"Columns ({len(df.columns)}): {df.columns.tolist()[:6]} ... {df.columns.tolist()[-3:]}")
-        print(f"\nLabel distribution:\n{df['label'].value_counts().to_string()}")
-        print(f"\nSource distribution:\n{df['source'].value_counts().to_string()}")
+        logger.info(f"CSV shape: {df.shape}")
+        logger.info(f"Columns ({len(df.columns)}): {df.columns.tolist()[:6]} ... {df.columns.tolist()[-3:]}")
+        logger.info(f"\nLabel distribution:\n{df['label'].value_counts().to_string()}")
+        logger.info(f"\nSource distribution:\n{df['source'].value_counts().to_string()}")
 
 
 # ---------------------------------------------------------------------------
@@ -240,14 +232,14 @@ def capture_webcam(user_id: str):
       SPACE → toggle recording on/off
       ESC   → quit
     """
-    print("\n🎥  Webcam Capture Mode")
-    print(f"    User: {user_id}")
-    print(f"    Output: {RAW_CSV_PATH}")
-    print("    Controls:")
-    print("      a-z / 0-9 → select label")
-    print("      n          → Neutral class")
-    print("      SPACE      → start/stop recording")
-    print("      ESC        → quit and save\n")
+    logger.info("\n🎥  Webcam Capture Mode")
+    logger.info(f"    User: {user_id}")
+    logger.info(f"    Output: {RAW_CSV_PATH}")
+    logger.info("    Controls:")
+    logger.info("      a-z / 0-9 → select label")
+    logger.info("      n          → Neutral class")
+    logger.info("      SPACE      → start/stop recording")
+    logger.info("      ESC        → quit and save\n")
 
     _ensure_csv_header(RAW_CSV_PATH)
 
@@ -257,7 +249,7 @@ def capture_webcam(user_id: str):
 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("❌  Cannot open webcam!")
+        logger.info("❌  Cannot open webcam!")
         return
 
     with mp_holistic.Holistic(
@@ -271,7 +263,7 @@ def capture_webcam(user_id: str):
         while cap.isOpened():
             success, frame = cap.read()
             if not success:
-                print("Ignoring empty camera frame.")
+                logger.info("Ignoring empty camera frame.")
                 continue
 
             frame = cv2.flip(frame, 1)
@@ -341,26 +333,26 @@ def capture_webcam(user_id: str):
             elif key == 32:  # SPACE
                 recording = not recording
                 state = "RECORDING" if recording else "PAUSED"
-                print(f"  ⏺ {state} | Label: {current_label} | Samples: {sample_counts.get(current_label, 0)}")
+                logger.info(f"  ⏺ {state} | Label: {current_label} | Samples: {sample_counts.get(current_label, 0)}")
             elif key == ord("n") or key == ord("N"):
                 current_label = "Neutral"
-                print(f"  🏷️  Label → Neutral")
+                logger.info(f"  🏷️  Label → Neutral")
             elif ord("a") <= key <= ord("z"):
                 current_label = chr(key).upper()
-                print(f"  🏷️  Label → {current_label}")
+                logger.info(f"  🏷️  Label → {current_label}")
             elif ord("0") <= key <= ord("9"):
                 current_label = chr(key)
-                print(f"  🏷️  Label → {current_label}")
+                logger.info(f"  🏷️  Label → {current_label}")
 
     cap.release()
     cv2.destroyAllWindows()
 
     # Print summary
-    print("\n📊  Capture Summary:")
+    logger.info("\n📊  Capture Summary:")
     for lbl in sorted(sample_counts.keys()):
-        print(f"    {lbl}: {sample_counts[lbl]} samples")
+        logger.info(f"    {lbl}: {sample_counts[lbl]} samples")
     total = sum(sample_counts.values())
-    print(f"    TOTAL: {total} samples saved to {RAW_CSV_PATH}")
+    logger.info(f"    TOTAL: {total} samples saved to {RAW_CSV_PATH}")
 
 
 # ---------------------------------------------------------------------------
@@ -378,7 +370,7 @@ def detect_realtime():
 
     model_path = "model.h5"
     if not os.path.exists(model_path):
-        print(f"❌  Model not found: {model_path}")
+        logger.info(f"❌  Model not found: {model_path}")
         return
 
     model = keras.models.load_model(model_path)
@@ -388,7 +380,7 @@ def detect_realtime():
 
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("❌  Cannot open webcam!")
+        logger.info("❌  Cannot open webcam!")
         return
 
     with mp_holistic.Holistic(
