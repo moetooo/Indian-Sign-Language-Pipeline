@@ -1,13 +1,13 @@
 # ─── Project-specific ───────────────────────────────────────
 # Generated data, trained models, and plots (large / user-specific)
-data/*
-!data/.gitkeep
+# data/*
+# !data/.gitkeep
 # models/*
 #!models/.gitkeep
-plots/*
-!plots/.gitkeep
-dataset/*
-!dataset/.gitkeep
+# plots/*
+# !plots/.gitkeep
+# dataset/*
+# !dataset/.gitkeep
 npy_dataset/*
 !npy_dataset/.gitkeep
 
@@ -21,7 +21,7 @@ npy_dataset/*
 base_paper.pdf
 
 # CSV data files
-*.csv
+# *.csv
 
 # Old images folder (removed from repo)
 images/

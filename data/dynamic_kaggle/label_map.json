@@ -1,0 +1,12 @@
+{
+    "bad": 0,
+    "good": 1,
+    "happy": 2,
+    "sad": 3,
+    "beautiful": 4,
+    "deaf": 5,
+    "fast": 6,
+    "slow": 7,
+    "hot": 8,
+    "cold": 9
+}

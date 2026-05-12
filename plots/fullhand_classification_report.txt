@@ -1,0 +1,181 @@
+                                       precision    recall  f1-score   support
+
+            He is going into the room       0.80      1.00      0.89         4
+              This place is beautiful       1.00      0.75      0.86         4
+                            afternoon       0.78      1.00      0.88         7
+                               animal       1.00      0.82      0.90        11
+                   are you free today       1.00      1.00      1.00         4
+             are you hiding something       0.57      1.00      0.73         4
+                                  bad       0.57      0.92      0.71        13
+                            beautiful       1.00      0.60      0.75         5
+                                  big       0.90      0.69      0.78        13
+                                 bird       0.73      1.00      0.85        11
+                                blind       0.75      0.60      0.67         5
+                   bring water for me       0.75      0.75      0.75         4
+                       can i help you       0.83      1.00      0.91         5
+           can you repeat that please       1.00      0.75      0.86         4
+                                  cat       0.73      1.00      0.85        11
+                                cheap       1.00      0.60      0.75         5
+                             clothing       0.83      0.91      0.87        11
+                                 cold       0.79      0.92      0.85        12
+                       comb your hair       1.00      1.00      1.00         4
+                      congratulations       1.00      1.00      1.00         4
+         could you please talk slower       1.00      1.00      1.00         4
+                                  cow       0.80      0.73      0.76        11
+                               curved       1.00      0.80      0.89         5
+                                 deaf       0.50      0.20      0.29         5
+                       do me a favour       1.00      1.00      1.00         4
+                     do not abuse him       0.67      1.00      0.80         4
+                   do not be stubborn       0.75      1.00      0.86         3
+                       do not hurt me       1.00      1.00      1.00         4
+                 do not make me angry       1.00      1.00      1.00         4
+          do not take it to the heart       0.75      0.75      0.75         4
+                         do not worry       0.67      0.50      0.57         4
+                do you need something       1.00      0.50      0.67         4
+                                  dog       1.00      0.55      0.71        11
+                                dress       0.62      0.45      0.53        11
+                                  dry       0.71      0.38      0.50        13
+                              evening       1.00      0.71      0.83         7
+                            expensive       0.67      0.40      0.50         5
+                               famous       0.60      0.60      0.60         5
+                                 fast       0.69      0.69      0.69        13
+                               female       0.33      0.20      0.25         5
+                                 fish       0.89      0.73      0.80        11
+                                 flat       0.75      0.60      0.67         5
+                               friday       0.43      0.43      0.43         7
+                         go and sleep       1.00      1.00      1.00         5
+                                 good       0.67      0.62      0.64        13
+                        had your food       0.80      1.00      0.89         4
+                                happy       0.67      0.77      0.71        13
+                                  hat       0.88      0.64      0.74        11
+                     he came by train       0.80      1.00      0.89         4
+                     he is on the way       1.00      1.00      1.00         4
+                  he she is my friend       1.00      1.00      1.00         4
+             he would be coming today       1.00      1.00      1.00         4
+                              healthy       0.85      0.85      0.85        13
+                              help me       1.00      0.75      0.86         4
+                       hi how are you       1.00      1.00      1.00         4
+                                horse       0.82      0.82      0.82        11
+                                  hot       0.67      0.77      0.71        13
+                                 hour       0.62      0.71      0.67         7
+                       how are things       1.00      1.00      1.00         3
+                   how can i help you       1.00      0.75      0.86         4
+                  how can i trust you       0.50      0.50      0.50         4
+                         how dare you       0.67      1.00      0.80         4
+                      how old are you       1.00      0.50      0.67         4
+                           i am (age)       1.00      1.00      1.00         3
+                  i am afraid of that       1.00      1.00      1.00         4
+                          i am crying       1.00      1.00      1.00         4
+                   i am feeling bored       1.00      1.00      1.00         4
+                    i am feeling cold       1.00      1.00      1.00         4
+             i am fine. thank you sir       1.00      0.75      0.86         4
+                          i am hungry       0.80      1.00      0.89         4
+           i am in dilemma what to do       0.80      1.00      0.89         4
+                 i am not really sure       1.00      1.00      1.00         4
+                 i am really grateful       0.80      1.00      0.89         4
+            i am sitting in the class       1.00      1.00      1.00         4
+           i am so sorry to hear that       1.00      1.00      1.00         4
+            i am suffering from fever       1.00      1.00      1.00         4
+                           i am tired       1.00      1.00      1.00         4
+                      i am very happy       0.75      1.00      0.86         3
+             i can not help you there       1.00      1.00      1.00         4
+                       i do not agree       1.00      1.00      1.00         4
+                     i do not like it       1.00      0.75      0.86         4
+                     i do not mean it       1.00      1.00      1.00         4
+                      i enjoyed a lot       1.00      0.60      0.75         5
+                           i got hurt       0.67      1.00      0.80         4
+                i like you i love you       1.00      0.80      0.89         5
+                         i need water       1.00      1.00      1.00         4
+                            i promise       1.00      1.00      1.00         4
+               i really appreciate it       1.00      1.00      1.00         4
+       i somehow got to know about it       0.67      1.00      0.80         4
+            i was stopped by some one       1.00      0.75      0.86         4
+it does not make any difference to me       0.80      1.00      0.89         4
+        it was nice chatting with you       1.00      1.00      1.00         4
+                    let him take time       1.00      1.00      1.00         4
+                                light       1.00      0.80      0.89         5
+                                 long       0.73      0.85      0.79        13
+                                loose       0.40      0.40      0.40         5
+                                 loud       1.00      1.00      1.00        13
+                               minute       0.57      0.57      0.57         7
+                               monday       1.00      1.00      1.00         7
+                                month       0.67      0.86      0.75         7
+                              morning       0.83      0.71      0.77         7
+                                mouse       0.46      0.55      0.50        11
+                  my name is xxxxxxxx       1.00      1.00      1.00         4
+                               narrow       0.43      0.46      0.44        13
+                                  new       0.50      0.46      0.48        13
+                     nice to meet you       1.00      0.75      0.86         4
+                                night       0.86      0.86      0.86         7
+   now onwards he will never hurt you       1.00      1.00      1.00         4
+                                  old       0.93      1.00      0.96        13
+                                 pant       0.62      0.73      0.67        11
+                               pocket       0.56      0.82      0.67        11
+  pour some more water into the glass       1.00      1.00      1.00         4
+                      prepare the bed       1.00      1.00      1.00         4
+                                quiet       0.89      0.62      0.73        13
+                                  sad       1.00      0.60      0.75         5
+                             saturday       0.60      0.43      0.50         7
+                               second       1.00      1.00      1.00         2
+                       serve the food       1.00      1.00      1.00         5
+                  shall we go outside       1.00      1.00      1.00         4
+                                shirt       0.38      0.73      0.50        11
+                                shoes       0.73      0.73      0.73        11
+                                short       0.65      0.85      0.73        13
+                                 sick       0.85      0.85      0.85        13
+                                skirt       0.57      0.73      0.64        11
+                                 slow       0.82      0.69      0.75        13
+                                small       0.73      0.62      0.67        13
+                         speak softly       1.00      1.00      1.00         5
+                                 suit       0.78      0.64      0.70        11
+                               sunday       0.80      0.57      0.67         7
+                              t_shirt       0.33      0.27      0.30        11
+                take care of yourself       1.00      1.00      1.00         4
+                                 tall       0.89      0.62      0.73        13
+                        tell me truth       1.00      0.75      0.86         4
+                    thank you so much       1.00      0.75      0.86         4
+               that is so kind of you       1.00      1.00      1.00         4
+                             thursday       1.00      0.86      0.92         7
+                                 time       0.86      0.86      0.86         7
+                                today       1.00      0.86      0.92         7
+                             tomorrow       0.57      0.57      0.57         7
+                    try to understand       1.00      1.00      1.00         4
+                              tuesday       0.80      0.57      0.67         7
+         turn on light turn off light       1.00      1.00      1.00         4
+                                 ugly       0.80      0.80      0.80         5
+                                 warm       1.00      1.00      1.00        13
+                  we are all with you       1.00      0.50      0.67         4
+                       wear the shirt       1.00      1.00      1.00         4
+                            wednesday       1.00      0.86      0.92         7
+                                 week       0.75      0.86      0.80         7
+                                  wet       0.47      0.62      0.53        13
+                   what are you doing       0.67      1.00      0.80         4
+                what did you tell him       1.00      0.25      0.40         4
+                       what do you do       0.67      0.50      0.57         4
+                    what do you think       1.00      1.00      1.00         4
+           what do you want to become       1.00      0.50      0.67         4
+                        what happened       1.00      1.00      1.00         3
+what have you planned for your career       1.00      1.00      1.00         2
+            what is your phone number       1.00      1.00      1.00         4
+                        what you want       1.00      0.75      0.86         4
+            when will the train leave       1.00      1.00      1.00         4
+                   where are you from       1.00      1.00      1.00         4
+     which collegeschool are you from       1.00      1.00      1.00         4
+                          who are you       1.00      1.00      1.00         4
+                    why are you angry       1.00      1.00      1.00         4
+                   why are you crying       1.00      1.00      1.00         4
+             why are you disappointed       0.60      0.75      0.67         4
+                                 wide       0.80      0.92      0.86        13
+                                 year       0.78      1.00      0.88         7
+                            yesterday       1.00      0.57      0.73         7
+                          you are bad       1.00      0.80      0.89         5
+                         you are good       1.00      1.00      1.00         4
+                      you are welcome       0.67      1.00      0.80         4
+                        you can do it       0.80      1.00      0.89         4
+       you do anything, i do not care       1.00      0.75      0.86         4
+   you need a medicine, take this one       0.80      1.00      0.89         4
+                                young       0.45      0.77      0.57        13
+
+                             accuracy                           0.79      1112
+                            macro avg       0.85      0.82      0.82      1112
+                         weighted avg       0.81      0.79      0.79      1112

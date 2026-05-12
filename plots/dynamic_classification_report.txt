@@ -1,0 +1,16 @@
+              precision    recall  f1-score   support
+
+         bad       0.69      0.75      0.72        12
+        good       0.82      0.75      0.78        12
+       happy       1.00      1.00      1.00        13
+         sad       0.83      1.00      0.91         5
+   beautiful       0.80      0.80      0.80         5
+        deaf       0.57      0.80      0.67         5
+        fast       0.92      0.85      0.88        13
+        slow       0.93      1.00      0.96        13
+         hot       1.00      0.85      0.92        13
+        cold       1.00      0.92      0.96        12
+
+    accuracy                           0.87       103
+   macro avg       0.86      0.87      0.86       103
+weighted avg       0.88      0.87      0.88       103
