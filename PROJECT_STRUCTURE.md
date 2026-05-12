@@ -12,7 +12,8 @@ The root directory acts as the control center, containing all execution scripts,
 
 *   **`isl_detection.py` (Phase 1)**
     *   **Purpose:** The data collection and extraction engine. 
-    *   **Details:** It utilizes Google's MediaPipe Holistic model to extract 3D coordinates (x, y, z) for hand and upper-body poses. It can ingest data from live webcam feeds, process raw images, or import massive datasets directly from the Kaggle CSV format. It outputs "raw" landmark data into CSV files.
+    *   **Details:** It utilizes Google's MediaPipe Holistic model to extract 3D coordinates (x, y, z) for hand and upper-body poses. It can ingest data from live webcam feeds or import massive datasets directly from the Kaggle CSV format. It outputs "raw" landmark data into CSV files.
+
 *   **`kinematic_engineer.py` (Phase 2)**
     *   **Purpose:** The mathematical feature engineering core for static gestures.
     *   **Details:** It reads the raw landmarks generated in Phase 1 and converts them into rotation-invariant, scale-invariant geometric features. Instead of absolute spatial coordinates, it computes Joint Angles, Spread Angles, and Normalized Distances centered on the wrist. This dramatically reduces input dimensionality and boosts model accuracy to ~99.9%.
@@ -40,9 +41,7 @@ The root directory acts as the control center, containing all execution scripts,
 *   **`run_pipeline.py`**
     *   **Purpose:** The master orchestrator for Phases 1 to 3.
     *   **Details:** Provides a single, unified CLI command to automatically chain data extraction, kinematic engineering, and static model training back-to-back.
-*   **`image_pipeline.py`**
-    *   **Purpose:** An alternative ingest pipeline.
-    *   **Details:** While `isl_detection.py` is highly optimized for Kaggle CSVs, this script is explicitly built to traverse nested image directories, run MediaPipe over standard `.jpg`/`.png` files, and compile them into the standardized CSV formats needed by the rest of the pipeline.
+
 *   **`test_all_letters.py`**
     *   **Purpose:** A gamified testing/validation script.
     *   **Details:** Guides the user through a sequential test, challenging them to sign all letters from A to Z in front of the webcam, verifying the signs against the trained AI model in real-time.
@@ -97,7 +96,8 @@ Currently, all 13 Python scripts sit in the root directory. Moving functional co
 ```text
 Indian-Sign-Language-Detection/
 ├── src/
-│   ├── data_pipeline/         # isl_detection.py, image_pipeline.py
+│   ├── data_pipeline/         # isl_detection.py
+
 │   ├── features/              # kinematic_engineer.py, temporal_engineer.py
 │   ├── modeling/              # train_classifier.py, train_dynamic.py
 │   ├── inference/             # realtime_inference.py, realtime_dynamic.py, realtime_fingerspell.py

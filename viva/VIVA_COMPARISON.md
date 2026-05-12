@@ -23,7 +23,8 @@ The base paper has **two parts**: static letter recognition (CNN) and gesture ph
 | **Landmark Extraction** | MediaPipe Holistic → 1662 keypoints (face + hands + pose) | MediaPipe Holistic → 144 keypoints (hands + upper pose, NO face) |
 | **Face Landmarks** | ✅ 468 face points included | ❌ Excluded (irrelevant for hand signs) |
 | **Data Storage** | NumPy arrays (.npy, 30 frames × 1662 per video) | CSV (1 row × 144 values per sample) |
-| **Dataset Size** | ~1,800 samples (60 videos × 30 frames, self-collected) | **106,000+ samples** (78K Kaggle + 28.6K image-extracted) |
+| **Dataset Size** | ~1,800 samples (60 videos × 30 frames, self-collected) | **78,000+ samples** (Kaggle CSV) |
+
 | **Model** | CNN (3 Conv2D layers) + LSTM (3 LSTM layers) | Deep MLP (512→256→128→26) |
 | **Best Static Accuracy** | CNN: 97.75% F1 / LSTM: 85.57% F1 | **MLP: 99.92% accuracy** |
 | **Feature Engineering** | None (raw keypoints only) | 3-stage: Centering → Normalization → Joint Angles |
@@ -33,19 +34,22 @@ The base paper has **two parts**: static letter recognition (CNN) and gesture ph
 | **Rotation Invariance** | ❌ Not addressed | ✅ Joint angles independent of orientation |
 | **Real-Time Inference** | Django web app + webcam | Standalone OpenCV with live model switching (1-7 keys) |
 | **Stability Logic** | None mentioned | 5-frame rolling buffer + majority vote + 85% confidence |
-| **Ablation Study** | CNN vs LSTM only | **7 models × 4 feature types × 2 datasets** |
+| **Ablation Study** | CNN vs LSTM only | **4 models × 4 feature types** |
+
 | **Regularization** | L2 + Dropout(0.2) + BatchNorm | Dropout(0.2/0.3) + BatchNorm + EarlyStopping + ReduceLROnPlateau |
 | **Training Epochs** | 60-70 epochs | 50 max with EarlyStopping (patience=5) |
-| **Reproducibility** | Self-collected only | Public Kaggle + public image dataset |
+| **Reproducibility** | Self-collected only | Public Kaggle CSV |
+
 
 ---
 
 ## What We Improved (Static Recognition)
 
-### 1. 60× Larger Dataset
+### 1. 40× Larger Dataset
 - **Paper:** ~1,800 samples (self-collected webcam)
-- **Ours:** 106,000+ samples from diverse public sources
+- **Ours:** 78,000+ samples from public Kaggle dataset
 - **Impact:** Prevents overfitting, enables true generalization
+
 
 ### 2. Kinematic Feature Engineering
 The paper feeds **raw coordinates** directly — sensitive to where/how the hand appears. We added:
@@ -79,7 +83,8 @@ Paper extracts 468 face points (1,404 values). For hand-based letter recognition
 
 ### 6. Scientific Ablation Study
 Paper: CNN vs LSTM — 2 comparisons.
-Ours: **7 models across 4 feature types on 2 datasets** = proper ablation proving which features matter.
+Ours: **4 models across 4 feature types** = proper ablation proving which features matter.
+
 
 ---
 
@@ -199,6 +204,7 @@ This establishes state-of-the-art context and proves our approach is competitive
 ### Q1: How is your project different from the base paper?
 **A:** Three major differences: (1) We engineered kinematic features (centering, normalization, joint angles) making our model position/scale/rotation invariant — the paper uses raw coordinates. (2) We use a Deep MLP instead of CNN/LSTM which is architecturally appropriate for landmark vectors. (3) We trained on 106K+ samples vs. ~1,800, achieving 99.92% accuracy vs. their 97.75%.
 
+
 ### Q2: Why didn't you use CNN like the paper?
 **A:** CNN is designed for 2D spatial data (images with pixel grids). Our input is a 1D vector of landmark coordinates — there's no spatial grid structure for convolution to exploit. An MLP is the correct architecture for dense tabular data. Using CNN on landmark vectors is like trying to find edges in a spreadsheet.
 
@@ -219,7 +225,7 @@ The same sign produces identical features whether the hand is close/far, left/ri
 ### Q6: What is the ablation study? Why 7 models?
 **A:** An ablation study systematically varies components to measure their impact. We trained 7 models:
 - 4 feature types (source_kaggle / raw / kinematic / angles_only) on Kaggle data
-- 3 feature types (raw / kinematic / angles_only) on image data
+
 
 This proves that kinematic features generalize better and that 38 angle features match 144 raw features while being more robust.
 
@@ -233,7 +239,8 @@ This proves that kinematic features generalize better and that 38 angle features
 **A:** More features ≠ better accuracy. The paper's 1,662 include 468 face landmarks (irrelevant), full body pose (mostly irrelevant), and raw coordinates (position-dependent). Our 38 angle features capture only the **geometric essence** of hand shape — pure signal, zero noise.
 
 ### Q10: What dataset did you use?
-**A:** Two public sources: (1) Kaggle "Indian Sign Language Gesture Landmarks" CSV — ~78K pre-extracted samples, (2) Gesture Speech image dataset — 31,200 rendered hand images, landmarks extracted using MediaPipe Hands.
+**A:** Kaggle "Indian Sign Language Gesture Landmarks" CSV — ~78K pre-extracted samples.
+
 
 ---
 
@@ -278,7 +285,8 @@ This proves that kinematic features generalize better and that 38 angle features
 |-------|--------|-------------|
 | Phase 1 | ✅ Done | Landmark extraction (CSV + images + webcam) |
 | Phase 2 | ✅ Done | Kinematic feature engineering |
-| Phase 3 | ✅ Done | MLP training + ablation study (7 models) |
+| Phase 3 | ✅ Done | MLP training + ablation study (4 models) |
+
 | Phase 4 | ✅ Done | Real-time inference with live model switching |
 | Phase 5 | 🔜 Planned | Temporal data engineering (30-frame sequences) |
 | Phase 6 | 🔜 Planned | Dynamic LSTM model training |
@@ -292,10 +300,12 @@ This proves that kinematic features generalize better and that 38 angle features
 | Metric | Base Paper (Static) | Our Part 1 (Current) | Base Paper (Dynamic) | Our Part 2 (Planned) |
 |--------|-------------------|---------------------|---------------------|---------------------|
 | Accuracy | 97.75% (CNN) | **99.92%** | 100% (5 classes) | TBD (320+ classes) |
-| Dataset | ~1,800 | **106,000+** | ~300 sequences | **40,000+ videos** |
+| Dataset | ~1,800 | **78,000+** | ~300 sequences | **40,000+ videos** |
+
 | Features | 1,662 (with noise) | **38** (pure signal) | 1,662 | **38-182** (kinematic) |
 | Engineering | None | Centering+Norm+Angles | None | Per-frame kinematic |
 | Architecture | CNN/LSTM (mismatched) | MLP (correct) | LSTM only | LSTM + DTW + Transformer |
 | Word boundaries | N/A | N/A | None | Neutral Pose Detection |
 | Translation | Isolated | Isolated | Isolated | **Continuous** |
-| Models compared | 2 | **7** | 1 | **3+** (LSTM/DTW/ViT) |
+| Models compared | 2 | **4** | 1 | **3+** (LSTM/DTW/ViT) |
+

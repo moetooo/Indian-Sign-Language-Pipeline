@@ -133,13 +133,13 @@ Output: `models/isl_{run}_mlp.h5` and `plots/`
 
 #### Phase 1b — Extract from images (optional)
 ```powershell
-python src/data_pipeline/image_pipeline.py --phase 1
+python -m src.data_pipeline.image_pipeline --phase 1
 ```
 Output: `data/raw/img_raw_data.csv`
 
 #### Phase 2 — Kinematic engineering
 ```powershell
-python src/features/kinematic_engineer.py
+python -m src.features.kinematic_engineer
 ```
 Output: `data/kinematic/isl_kinematic_data.csv`, `data/angles/isl_angles_only.csv`
 
@@ -152,6 +152,38 @@ Output: `models/*.h5`, `models/*.pkl`, `plots/*.png`
 #### Phase 4 — Run inference
 ```powershell
 python -m src.inference.realtime_inference --model kinematic
+
+---
+
+### Dynamic Sign Pipeline (Phases 5–7) — Body-Aware
+
+> These phases are **fully isolated** from Phases 1–4. They use separate
+> scripts, data directories, and model files.
+
+#### Phase 5 — Temporal Feature Engineering (Body-Aware, 240-dim)
+```powershell
+python -m src.features.temporal_engineer_bodyaware               # both data sources
+python -m src.features.temporal_engineer_bodyaware --source video # .MOV files only
+python -m src.features.temporal_engineer_bodyaware --source npy   # .npy files only
+```
+Output: `data/dynamic_bodyaware/` (tensors + `label_map_body.json`)
+
+#### Phase 6 — Train Dynamic Model (Body-Aware)
+```powershell
+python -m src.modeling.train_dynamic_bodyaware              # GRU (default)
+python -m src.modeling.train_dynamic_bodyaware --use_lstm    # LSTM instead
+```
+Output: `models/isl_bodyaware_lstm.h5`, `plots/bodyaware_confusion.png`
+
+#### Phase 7 — Real-Time Dynamic Inference (Body-Aware)
+```powershell
+python -m src.inference.realtime_dynamic_bodyaware
+python -m src.inference.realtime_dynamic_bodyaware --camera 1
+```
+
+#### Consistency Test (240-dim parity)
+```powershell
+python -m tests.test_kinematics_parity
 ```
 
 ---

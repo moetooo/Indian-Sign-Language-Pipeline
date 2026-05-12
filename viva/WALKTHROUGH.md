@@ -20,12 +20,12 @@ This project implements a complete **Indian Sign Language (ISL) Detection** syst
 | Source | Method | Samples |
 |--------|--------|---------|
 | Kaggle CSV (pre-extracted) | Direct import | ~78,000 |
-| Gesture Speech Images | MediaPipe Hands on 31,200 JPGs | ~28,600 |
 | Live webcam | Real-time capture | User-defined |
+
 
 ### Output:
 - `data/raw/isl_raw_data.csv` — Kaggle-sourced landmarks
-- `data/raw/img_raw_data.csv` — Image-extracted landmarks
+
 
 ---
 
@@ -73,7 +73,7 @@ Input → Dense(512, ReLU) → BatchNorm → Dropout(0.3)
 - EarlyStopping (patience=5), ReduceLROnPlateau (patience=3)
 - 80/15/15 train/val/test split, max 50 epochs
 
-### Results — 7 Models:
+### Results — 4 Models:
 
 | # | Model | Features | Dataset | Accuracy | F1 |
 |---|-------|----------|---------|----------|-----|
@@ -81,9 +81,7 @@ Input → Dense(512, ReLU) → BatchNorm → Dropout(0.3)
 | 2 | `raw` | 144 | Kaggle CSV | 99.92% | 0.9992 |
 | 3 | `kinematic` | 182 | Kaggle CSV | 99.79% | 0.9979 |
 | 4 | `angles_only` | 38 | Kaggle CSV | 99.75% | 0.9975 |
-| 5 | `img_raw` | 144 | Images | 99.16% | 0.9916 |
-| 6 | `img_kinematic` | 182 | Images | 98.91% | 0.9891 |
-| 7 | `img_angles_only` | 38 | Images | 96.47% | 0.9647 |
+
 
 ### Output:
 - `models/*.h5` — trained model weights
@@ -131,7 +129,7 @@ Webcam Frame → MediaPipe Holistic → Extract Landmarks
 | Decision | Rationale |
 |----------|-----------|
 | MLP over CNN | Landmarks are already extracted — no spatial/image processing needed |
-| MediaPipe Hands for images | Holistic model failed on rendered 3D hand images (2% detection). Hands model achieved 92% |
 | Kinematic features | Position-invariant features generalize better across users and environments |
 | `angles_only` as best for webcam | Only 38 features, fully invariant to hand position/scale/rotation |
 | StandardScaler persistence | Ensures inference uses exact same scaling as training |
+

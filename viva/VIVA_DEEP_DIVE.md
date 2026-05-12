@@ -33,9 +33,11 @@ The system is designed as a **4-phase modular pipeline** — each phase can run 
 **Result:** The `angles_only` model uses just **38 features** and achieves **99.75% accuracy** — proving that hand shape geometry alone is sufficient for recognition, without needing position or scale information.
 
 ### Secondary Contributions:
-- **Ablation study** across 7 models and 4 feature types — scientifically proving which features matter
+- **Ablation study** across 4 models and 4 feature types — scientifically proving which features matter
+
 - **Real-time stability system** (rolling buffer + majority vote + confidence threshold) for production-quality inference
-- **Unified pipeline script** (`run_pipeline.py`) — one command to go from raw data/images to trained models
+- **Unified pipeline script** (`run_pipeline.py`) — one command to go from raw data to trained models
+
 
 ---
 
@@ -50,14 +52,13 @@ The system is designed as a **4-phase modular pipeline** — each phase can run 
 
 STEP 1: Data Collection (Phase 1)
 ─────────────────────────────────
-  Source 1: Kaggle CSV (78,000 pre-extracted landmark samples)
-  Source 2: Gesture Speech Images (31,200 JPGs → MediaPipe Hands → 28,600 rows)
+  Source: Kaggle CSV (78,000 pre-extracted landmark samples)
   
   Each sample = 1 row with 147 columns:
     [label, source, user_id] + [63 left hand values] + [63 right hand values] + [18 pose values]
     
   Output: data/raw/isl_raw_data.csv (78K rows × 147 cols)
-          data/raw/img_raw_data.csv (28K rows × 147 cols)
+
 
 
 STEP 2: Feature Engineering (Phase 2)
@@ -125,7 +126,8 @@ STEP 3: Model Training (Phase 3)
   
   3h. Save model → models/isl_{name}_mlp.h5
   
-  Repeat for all 7 feature set combinations.
+  Repeat for all 4 feature set combinations.
+
 ```
 
 ### Training Results:
@@ -136,9 +138,7 @@ STEP 3: Model Training (Phase 3)
 | raw | 144 | 99.92% | 0.9992 | ~63s |
 | kinematic | 182 | 99.79% | 0.9979 | ~63s |
 | angles_only | 38 | 99.75% | 0.9975 | ~63s |
-| img_raw | 144 | 99.16% | 0.9916 | ~45s |
-| img_kinematic | 182 | 98.91% | 0.9891 | ~45s |
-| img_angles_only | 38 | 96.47% | 0.9647 | ~45s |
+
 
 ---
 
@@ -150,12 +150,13 @@ STEP 3: Model Training (Phase 3)
 | Task | Details |
 |------|---------|
 | Kaggle data import | Parse and normalize Kaggle CSV into unified schema (147 cols) |
-| Image pipeline | MediaPipe Hands extraction from 31,200 images |
+
 | Webcam capture module | Real-time landmark extraction with live overlay |
 | Kinematic engineering | Centering, normalization, joint angle computation |
 | Data validation | Phase 1 & 2 audits, schema verification |
 
-**Key files:** `isl_detection.py`, `kinematic_engineer.py`, `image_pipeline.py`, `paths.py`
+**Key files:** `isl_detection.py`, `kinematic_engineer.py`, `paths.py`
+
 
 ---
 
@@ -165,7 +166,8 @@ STEP 3: Model Training (Phase 3)
 | Task | Details |
 |------|---------|
 | MLP architecture | Deep MLP design (512→256→128→26 with BatchNorm + Dropout) |
-| Ablation study | Train 7 models across 4 feature types on 2 datasets |
+| Ablation study | Train 4 models across 4 feature types |
+
 | Evaluation metrics | Accuracy, precision, recall, F1, confusion matrices |
 | Hyperparameter tuning | EarlyStopping, ReduceLROnPlateau, learning rate |
 | Results analysis | Ablation summary, training curves, model comparison |
@@ -182,7 +184,8 @@ STEP 3: Model Training (Phase 3)
 |------|---------|
 | Real-time inference | Webcam → MediaPipe → Features → Prediction → HUD |
 | Stability system | Rolling buffer, majority vote, confidence threshold |
-| Live model switching | Press 1-7 to switch between models during inference |
+| Live model switching | Press 1-4 to switch between models during inference |
+
 | Letter test module | Guided A-Z testing with scoring |
 | Documentation | WALKTHROUGH.md, FILE_STRUCTURE.md, SETUP.md, VIVA_COMPARISON.md |
 | UI/UX | Resizable windows, HUD overlay, hand warnings |
@@ -210,7 +213,8 @@ STEP 3: Model Training (Phase 3)
 | **Kinematic feature engineering** | First to apply centering + normalization + joint angles for ISL landmark data |
 | **38-feature angles_only model** | Proved 38 features outperform 1,662 raw features in real-time scenarios |
 | **Proper architecture match** | MLP for tabular data (not CNN for non-image data) |
-| **7-model ablation study** | Scientifically proved which feature representation works best |
+| **4-model ablation study** | Scientifically proved which feature representation works best |
+
 | **Production stability system** | Rolling buffer + majority vote + confidence — not just accuracy but usability |
 
 > **Core argument:** We didn't just throw data at a neural network. We **engineered the right features first**, then used the **right architecture** — achieving higher accuracy with less data and faster training.

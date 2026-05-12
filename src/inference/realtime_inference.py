@@ -65,13 +65,9 @@ MODEL_CONFIGS = {
     "raw":           {"features": 144, "type": "raw_landmarks", "dataset": "Kaggle CSV"},
     "kinematic":     {"features": 182, "type": "kinematic",     "dataset": "Kaggle CSV"},
     "angles_only":   {"features": 38,  "type": "angles_only",   "dataset": "Kaggle CSV"},
-    # --- Image dataset-trained models ---
-    "img_raw":          {"features": 144, "type": "raw_landmarks", "dataset": "Gesture Speech Images"},
-    "img_kinematic":    {"features": 182, "type": "kinematic",     "dataset": "Gesture Speech Images"},
-    "img_angles_only":  {"features": 38,  "type": "angles_only",   "dataset": "Gesture Speech Images"},
 }
 
-# Ordered list for key-switching (1-7)
+# Ordered list for key-switching (1-4)
 MODEL_LIST = list(MODEL_CONFIGS.keys())
 
 # Class labels (0-25 → A-Z)
@@ -301,9 +297,6 @@ FEATURE_BUILDERS = {
     "raw":             build_raw_features,
     "angles_only":     build_angles_only_features,
     "source_kaggle":   build_kaggle_features,
-    "img_raw":         build_raw_features,
-    "img_kinematic":   build_kinematic_features,
-    "img_angles_only": build_angles_only_features,
 }
 
 
@@ -350,7 +343,7 @@ def draw_hud(frame, prediction, confidence, fps, latency_ms,
                 cv2.FONT_HERSHEY_SIMPLEX, 0.45, COL_WHITE, 1, cv2.LINE_AA)
 
     # ── Model switch hint ──
-    cv2.putText(frame, "Keys 1-7: switch model", (w - 200, h - 12),
+    cv2.putText(frame, "Keys 1-4: switch model", (w - 200, h - 12),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (120, 120, 120), 1, cv2.LINE_AA)
 
     return frame
@@ -570,7 +563,7 @@ def run_inference(model_name: str, camera_idx: int,
                 break
 
             # ── Live model switching (keys 1-7) ──
-            if ord('1') <= key <= ord('7'):
+            if ord('1') <= key <= ord('4'):
                 new_idx = key - ord('1')
                 if new_idx < len(MODEL_LIST):
                     new_name = MODEL_LIST[new_idx]

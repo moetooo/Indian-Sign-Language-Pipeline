@@ -37,7 +37,8 @@ Indian-Sign-Language-Pipeline/
 ├── data/                          ← Generated data (Raw + Kinematic + Angles CSVs)
 ├── models/                        ← Trained MLP models (.h5) & Scalers (.pkl)
 ├── plots/                         ← Confusion matrices & training histories
-├── dataset/                       ← Source datasets (Kaggle CSV + Images)
+├── dataset/                       ← Source datasets (Kaggle CSV)
+
 ├── paths.py                       ← Central path configuration
 ├── isl_detection.py               ← Phase 1: Data Collection & Kaggle Import
 ├── kinematic_engineer.py          ← Phase 2: Math/Feature Engineering
@@ -45,7 +46,7 @@ Indian-Sign-Language-Pipeline/
 ├── realtime_inference.py          ← Phase 4: OpenCV Live Webcam Inference
 ├── test_all_letters.py            ← Guided A-Z Letter Test Script
 ├── run_pipeline.py                ← Single-command execution (Phases 1-3)
-└── image_pipeline.py              ← Alternative pipeline for image datasets
+
 ```
 
 ---
@@ -71,7 +72,8 @@ pip install -r requirements.txt
 If models are already trained (located in the `models/` directory):
 
 ```powershell
-# Run real-time webcam inference (Press 1-7 to switch models live)
+# Run real-time webcam inference (Press 1-4 to switch models live)
+
 python src/inference/realtime_inference.py --model angles_only
 
 # Take the guided A-Z ISL Letter Test against the AI
@@ -96,9 +98,11 @@ python src/modeling/train_classifier.py
 ## 🗺️ The 7-Phase Roadmap
 
 ### Part 1: Static ISL Recognition (✅ Current)
-*   **Phase 1 — Data Collection:** MediaPipe Holistic landmark extraction resulting in 106,000+ CSV samples from Kaggle & image datasets.
+*   **Phase 1 — Data Collection:** MediaPipe Holistic landmark extraction resulting in 78,000+ CSV samples from Kaggle dataset.
+
 *   **Phase 2 — Kinematic Feature Engineering:** Centering on the wrist, scaling/normalization, and calculating 38 precise Joint & Spread Angles per hand.
-*   **Phase 3 — Deep MLP Ablation Study:** Training, comparing, and evaluating 7 distinct models across 4 unique mathematical feature variants.
+*   **Phase 3 — Deep MLP Ablation Study:** Training, comparing, and evaluating 4 distinct models across 4 unique mathematical feature variants.
+
 *   **Phase 4 — Real-Time Inference:** Production-ready OpenCV GUI featuring live model-switching via keyboard, a 5-frame rolling stability buffer, and >85% confidence gating.
 
 ### Part 2: Dynamic ISL Translation (🔜 Planned)
