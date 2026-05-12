@@ -135,7 +135,8 @@ target/
 .spyderproject
 .spyproject
 /site
-/viva
+# /viva (Removed to include Phase 1-4 documentation)
+
 # Ensure empty directories are tracked
 !data/.gitkeep
 !models/.gitkeep
